@@ -6,19 +6,15 @@ Employee = mongoose.model('Employee');
 
 module.exports = {
     addEmployee: addEmployee,
+    listEmployees:listEmployees,
 };
 
 function addEmployee(req, res) {
+    
 
     if (!req.body.name && !req.body.mobile && !req.body.email && !req.body.city )
      {
-        // return res.json(Response(402, "failed", "Please fill all the required fields."));
-        return res.json({
-            'code': 200,
-            'status': 'error',
-            "message": 'Failed.',
-            'data' : req.body
-        });
+        return res.json({'code': 200,'status': 'error',"message": 'Failed.','data' : req.body});
      }
      else 
      {
@@ -28,18 +24,51 @@ function addEmployee(req, res) {
             "email": req.body.email,
             "city": req.body.city
         };
-        Employee.insertMany(employeeData,function(err,res){
-            if(err)
-            throw err;
-            else
-            console.log("Saved");
-        });
-        return res.json({
-            'code': 200,
-            'status': 'success',
-            "message": 'Student list get Successfully.',
-        });
-     }
-  
-    
+        Employee.count({email : req.body.email}).then(count => {
+         if(count > 0)
+         {
+            return res.json({
+                'code': 201,
+                'status': 'error',
+                "message": 'Email already exits',
+            });
+         }
+         else
+         {
+            Employee.insertMany(employeeData).then( result => {
+                return res.json({
+                    'code': 200,
+                    'status': 'success',
+                    "message": 'Student list get Successfully.',
+                    "data" : result
+                });
+            })
+        
+         }
+      });
+     }    
+}
+
+function listEmployees(req,res){
+    Employee.count().then(count => {
+        if(count > 0)
+        {
+            Employee.find({}).then(data => {
+                return res.json({
+                    'code': 200,
+                    'status': 'success',
+                    "message": 'Employees List Successfully!.',
+                    "data" : data
+                });            
+            })
+        }
+        else
+        {
+            return res.json({
+                'code': 201,
+                'status': 'success',
+                "message": 'NO Data Found.',
+            });
+        }
+    })
 }
